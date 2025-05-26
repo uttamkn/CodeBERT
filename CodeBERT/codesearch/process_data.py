@@ -24,6 +24,9 @@ def format_str(string):
 
 
 def preprocess_test_data(language, test_batch_size=1000, use_hf=False):
+    DOCSTRING_TOKENS = ""
+    CODE_TOKENS = ""
+    URL = ""
     if use_hf:
         if load_dataset is None:
             raise ImportError("Please install the 'datasets' library: pip install datasets")
@@ -32,12 +35,18 @@ def preprocess_test_data(language, test_batch_size=1000, use_hf=False):
         dataset = load_dataset("code_search_net", language, split="test")
         data = dataset.to_pandas().to_dict(orient="records")
         print("Downloaded {} examples".format(len(data)))
+        DOCSTRING_TOKENS = "func_documentation_tokens"
+        CODE_TOKENS = "func_code_tokens"
+        URL = "func_code_url"
     else:
         path = os.path.join(DATA_DIR, '{}_test_0.jsonl.gz'.format(language))
         print("Reading local dataset: {}".format(path))
         with gzip.open(path, 'r') as pf:
             lines = pf.readlines()
         data = [json.loads(str(line, encoding='utf-8')) for line in lines]
+        DOCSTRING_TOKENS = "docstring_tokens"
+        CODE_TOKENS = "code_tokens"
+        URL = "url"
 
     idxs = np.arange(len(data))
     np.random.seed(0)
@@ -53,10 +62,10 @@ def preprocess_test_data(language, test_batch_size=1000, use_hf=False):
         examples = []
         for d_idx in range(len(batch_data)):
             line_a = batch_data[d_idx]
-            doc_token = ' '.join(line_a['docstring_tokens'])
+            doc_token = ' '.join(line_a[DOCSTRING_TOKENS])
             for line_b in batch_data:
-                code_token = ' '.join([format_str(token) for token in line_b['code_tokens']])
-                example = (str(1), line_a['url'], line_b['url'], doc_token, code_token)
+                code_token = ' '.join([format_str(token) for token in line_b[CODE_TOKENS]])
+                example = (str(1), line_a[URL], line_b[URL], doc_token, code_token)
                 examples.append('<CODESPLIT>'.join(example))
 
         data_path = os.path.join(DATA_DIR, 'test', language)
