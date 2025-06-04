@@ -51,7 +51,7 @@ def preprocess_test_data(language, test_batch_size=1000, use_hf=False):
     idxs = np.arange(len(data))
     np.random.seed(0)
     np.random.shuffle(idxs)
-    data = np.array(data, dtype=np.object)[idxs]
+    data = np.array(data, dtype=object)[idxs]
     batched_data = chunked(data, test_batch_size)
 
     print("Start processing")
